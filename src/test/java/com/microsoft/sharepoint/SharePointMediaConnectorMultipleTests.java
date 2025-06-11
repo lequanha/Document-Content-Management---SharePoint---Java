@@ -266,7 +266,6 @@ public class SharePointMediaConnectorMultipleTests extends SharepointConnectorTe
             List<File> files = sharePointMediaConnectorMultiple.listFiles(subSite, pathToScan);
             List<ServerResourceDto> serverResourceDtos = sharePointMediaConnectorMultiple.listFilesAsServerResources(subSite, pathToScan);
             serverResourceDtos = sharePointMediaConnectorMultiple.listFolders(subSite, pathToScan);
-            // ClaFilePropertiesDto claFilePropertiesDto = sharePointMediaConnectorMultiple.getFolderAttributes(subSite, pathToScan, false);
 
         }
         catch (Exception ex) {
