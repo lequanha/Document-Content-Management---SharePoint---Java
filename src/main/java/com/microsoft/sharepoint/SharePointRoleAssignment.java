@@ -2,9 +2,6 @@ package com.microsoft.sharepoint;
 
 import com.acl.AclType;
 
-/**
- * Created by uri on 25/08/2016.
- */
 public class SharePointRoleAssignment {
 
     private String loginName;

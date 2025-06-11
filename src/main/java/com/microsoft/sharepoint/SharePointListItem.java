@@ -2,9 +2,6 @@ package com.microsoft.sharepoint;
 
 import com.middleware.share.FileSystemObjectType;
 
-/**
- * Created by uri on 06/10/2016.
- */
 public class SharePointListItem {
 
     String fileRef;
@@ -35,8 +32,7 @@ public class SharePointListItem {
         sb.append('}');
         return sb.toString();
     }
-    // Todo: add support for access time
-
+    
     public String getFileRef() {
         return fileRef;
     }

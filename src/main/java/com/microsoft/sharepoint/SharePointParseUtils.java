@@ -41,10 +41,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- *
- * Created by uri on 25/08/2016.
- */
 public class SharePointParseUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(SharePointParseUtils.class);
@@ -106,7 +102,6 @@ public class SharePointParseUtils {
         try {
             Element element = document.getRootElement();
             return parseSharePointListItem(element);
-            //xpfac.compile("./a:link[@title='Member']//d:LoginName", Filters.element(),null, defaultNameSpace).evaluate(element)
         } catch (RuntimeException e) {
             String documentString = new XMLOutputter().outputString(document);
             logger.error("Failed to parse the resulting XML: {}", documentString, e);
@@ -134,7 +129,6 @@ public class SharePointParseUtils {
 
             }
             SharePointListItemPage result = new SharePointListItemPage(items);
-//            String href = extractXpath("./a:link/@a:href", rootElement, nameSpaces);
             String href = extractAttributeXpath("./a:link[@rel=\"next\"]/@href", rootElement, DEFAULT_NAMESPACE_LIST);
             result.setNextUrl(href);
             return result;
@@ -164,7 +158,6 @@ public class SharePointParseUtils {
             Integer fileSystemObjectTypeInt = Integer.valueOf(fileSystemObjectType);
             sharePointListItem.setFileSystemObjectType(FileSystemObjectType.values()[fileSystemObjectTypeInt]);
         }
-        //xpfac.compile("./a:link[@title='Member']//d:LoginName", Filters.element(),null, defaultNameSpace).evaluate(element)
 
         String authorId = extractXpath("./a:content/m:properties/d:Authorid", element);
         String modified = extractXpath("./a:content/m:properties/d:Modified", element);
@@ -185,40 +178,12 @@ public class SharePointParseUtils {
         return sharePointListItem;
     }
 
-    /**
-     <entry>
-     <id>http://ec2-54-200-41-63.us-west-2.compute.amazonaws.com/sites/test/_api/Web/GetFolderByServerRelativeUrl('/sites/test/images')</id>
-     <category term="SP.Folder" scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme" />
-     <link rel="edit" href="Web/GetFolderByServerRelativeUrl('/sites/test/images')" />
-     <link rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/Files" type="application/atom+xml;type=feed" title="Files" href="Web/GetFolderByServerRelativeUrl('/sites/test/images')/Files" />
-     <link rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/ListItemAllFields" type="application/atom+xml;type=entry" title="ListItemAllFields" href="Web/GetFolderByServerRelativeUrl('/sites/test/images')/ListItemAllFields" />
-     <link rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/ParentFolder" type="application/atom+xml;type=entry" title="ParentFolder" href="Web/GetFolderByServerRelativeUrl('/sites/test/images')/ParentFolder" />
-     <link rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/Properties" type="application/atom+xml;type=entry" title="Properties" href="Web/GetFolderByServerRelativeUrl('/sites/test/images')/Properties" />
-     <link rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/Folders" type="application/atom+xml;type=feed" title="Folders" href="Web/GetFolderByServerRelativeUrl('/sites/test/images')/Folders" />
-     <title />
-     <updated>2016-12-04T12:30:59Z</updated>
-     <author>
-     <name />
-     </author>
-     <content type="application/xml">
-     <m:properties>
-     <d:ItemCount m:type="Edm.Int32">0</d:ItemCount>
-     <d:Name>images</d:Name>
-     <d:ServerRelativeUrl>/sites/test/images</d:ServerRelativeUrl>
-     <d:WelcomePage></d:WelcomePage>
-     </m:properties>
-     </content>
-     </entry>*
-     * @param content content input stream
-     * @return List of folders
-     */
     public static List<SharePointExtendedFolder> parseFolders(InputStream content) throws Exception {
         logger.trace("Parsing folders");
         SAXBuilder saxBuilder = new SAXBuilder();
         Document document = saxBuilder.build(content);
         Element rootElement = document.getRootElement();
         List<SharePointExtendedFolder> result = new ArrayList<>();
-//        XPathFactory xpfac = XPathFactory.instance();
         for (Element element : rootElement.getChildren("entry", DEFAULT_NAMESPACE)) {
             SharePointExtendedFolder sharePointExtendedFolder = new SharePointExtendedFolder();
             result.add(sharePointExtendedFolder);
@@ -291,7 +256,6 @@ public class SharePointParseUtils {
         for (Element element : rootElement.getChildren("entry", defaultNameSpace)) {
             SharePointRoleAssignment currentRoleAssignement = new SharePointRoleAssignment();
             result.add(currentRoleAssignement);
-            //xpfac.compile("./a:link[@title='Member']//d:LoginName", Filters.element(),null, defaultNameSpace).evaluate(element)
             XPathExpression xp = xpfac.compile("./a:link[@title='Member']//d:LoginName", Filters.element(), null, defaultNameSpace, dataServicesNameSpace);
             Object resultElement = xp.evaluateFirst(element);
             if (resultElement != null) {
@@ -311,7 +275,6 @@ public class SharePointParseUtils {
                 logger.info("Extract roleType {}: {}", iUser, roleType);
                 currentRoleAssignement.setAclType(convertSharePointRoleToAclType(roleType));
             }
-            //Todo - read the d:BasePermissions/d:High and d:BasePermissions/d:Low values and extract READ/WRITE from there
             iUser++;
         }
         return result;
@@ -385,12 +348,6 @@ public class SharePointParseUtils {
         if (!name.contains("_x")) {
             return name;
         }
-//        //Handle the standard cases first
-//        name = name.replace("_x0020_"," ").replace("_x002e_",".");
-//        if (!name.contains("_x")) {
-//            return name;
-//        }
-//        //Shared_x0020_Documents
 
         try {
             StringBuilder stringBuilder = new StringBuilder();
@@ -427,12 +384,6 @@ public class SharePointParseUtils {
         }
     }
 
-    /**
-     * Web/Lists(guid'f1f04276-593b-454b-8ee1-006f83af18d3')/Items(6)
-     * To listId + "/" + String.valueOf(listItem.getId())
-     *
-     * @param mainId main ID
-     */
     @SuppressWarnings("unused")
     public static String convertMainIdToMediaItemId(String mainId) {
         String[] split = StringUtils.split(mainId, LIST_ITEM_ID_SEPARATOR);
@@ -487,36 +438,6 @@ public class SharePointParseUtils {
 
         return mediaChangeLogDto;
     }
-
-    /**
-     * NoChange	Enumeration whose values indicate that no change has taken place. The value = 0.
-     * Add	Enumeration whose values specify that an object has been added within the scope of a list, site, site collection, or content database. The value = 1.
-     * Update	Enumeration whose values specify that an object has been modified within the scope of a list, site, site collection, or content database. The value = 2.
-     * DeleteObject	Enumeration whose values specify that an object has been deleted within the scope of a list, site, site collection, or content database. The value = 3.
-     * Rename	Enumeration whose values specify that the leaf in a URL has been renamed. The value = 4.
-     * MoveAway	Enumeration whose values specify that a non-leaf section within a URL has been renamed. The object was moved away from the location within the site specified by the change. The value = 5.
-     * MoveInto	Enumeration whose values specify that a non-leaf section within a URL has been renamed. The object was moved into the location within the site specified by the change. The value = 6.
-     * Restore	Enumeration whose values specify that an object has restored from a backup or from the recycle bin. The value = 7.
-     * RoleAdd	Enumeration whose values specify that a role definition has been added. The value = 8.
-     * RoleDelete	Enumeration whose values specify that a role definition has been deleted. The value = 9.
-     * RoleUpdate	Enumeration whose values specify that a role definition has been updated. The value = 10.
-     * AssignmentAdd	Enumeration whose values specify that a user has been given permissions to a list. The value = 11.
-     * The list must have unique permissions enabled.
-     * AssignmentDelete	Enumeration whose values specify that a user has lost permissions to a list. The value = 12.
-     * The list must have unique permissions enabled.
-     * MemberAdd	Enumeration whose values specify that a user has been added to a group. The value = 13.
-     * MemberDelete	Enumeration whose values specify that a user has been removed from a group. The value = 14.
-     * SystemUpdate	Enumeration whose values specify that a change has been made to an item using the SystemUpdate method. The value = 15.
-     * Navigation	Enumeration whose values specify that a change in the navigation structure of a site collection has been made. The value = 16.
-     * ScopeAdd	Enumeration whose values specify that a change in permissions scope has been made to break inheritance from an object’s parent. The value = 17.
-     * ScopeDelete	Enumeration whose values specify that a change in permissions scope has been made to revert back to inheriting permissions from an object’s parent. The value = 18.
-     * ListContentTypeAdd
-     * ListContentTypeDelete
-     * Dirty	     *
-     *
-     * @param type document change type
-     * @return crawl event type
-     */
 
     public static DiffType convertToDiffType(ChangeType type) {
         switch (type) {
@@ -625,19 +546,6 @@ public class SharePointParseUtils {
                     });
 
             String itemId = extractXpath(".//d:ID", entry);
-/*           String uniqueAcl = extractXpath(".//d:HasUniqueRoleAssignments", entry, nameSpaces);
-             if (uniqueAcl != null) {
-                AclInheritanceType aclType = Boolean.valueOf(uniqueAcl) ? AclInheritanceType.NONE : AclInheritanceType.FOLDER;
-                fileProp.setAclInheritanceType(aclType);
-            }
-            String listId = extractXpath(".//d:vti_x005f_listid", entry, nameSpaces);
-            if (!StringUtils.isEmpty(listId)) {
-                listId = listId.substring(1, listId.length() - 1);
-            }
-            String extractedListId = Optional.ofNullable(listId)
-                    .map(val -> val + "/" + itemId)
-                    .orElse(itemId);
-            */
             fileProp.setFolder(false);
             fileProp.setFileName(name);
             fileProp.setFileSize(fileSize);
@@ -853,7 +761,6 @@ public class SharePointParseUtils {
     public static List<ServerResourceDto> extractSubSites(InputStream inputStream) throws JDOMException, IOException {
         Function<Element, ServerResourceDto> extractor = elem -> {
             String relativeUrl = extractXpath(".//d:ServerRelativeUrl", elem);
-//            String url = extractXpath(".//d:Url", element, nameSpaces);
             String title = extractXpath(".//d:Title", elem);
             ServerResourceDto dto = new ServerResourceDto(relativeUrl, title);
             dto.setType(ServerResourceType.SITE);
@@ -884,7 +791,6 @@ public class SharePointParseUtils {
                 folder.setName(name);
 
                 folder.setFullName(extractXpath(".//d:ServerRelativeUrl", elem));
-//                String itemCount = extractXpath(".//d:ItemCount", elem, DEFAULT_NAMESPACE_LIST);
                 folder.setType(ServerResourceType.FOLDER);
             } catch (Exception e) {
                 logger.error("Failed to parse sub-site folder, resolved name: {} elem {}", name, elem, e);

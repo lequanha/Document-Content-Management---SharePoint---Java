@@ -3,9 +3,6 @@ package com.microsoft.sharepoint;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Created by uri on 14/11/2016.
- */
 public class SharePointListItemPage implements Serializable {
 
     List<SharePointListItem> items;

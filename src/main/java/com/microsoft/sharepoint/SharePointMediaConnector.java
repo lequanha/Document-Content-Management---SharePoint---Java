@@ -40,20 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-/**
- * Created by uri on 07/08/2016.
- * <p>
- * TODO - support browsing by folders and not just lists
- * https://docauthority.sharepoint.com/tests/_api/web/GetFolderByServerRelativeUrl('/tests/Missoula%20SubZone/CitySub')?$expand=Folders,ListItemAllFields&$select*
- * We still need the list item ID (and we can save it as today), but we can browse the folders directly.
- * We can create a stream of files and folders (as today - each item is either a file or a folder)
- * that comes from the alternative API.
- * The main added value is that we have something that is more resilient.
- * The main disadvantage is that we still must have the other API for file attachments
- */
 public class SharePointMediaConnector extends MicrosoftConnectorBase {
-
-//    public static final String LIBRARY_PREFIX = "/library:";
 
     private static final Logger logger = LoggerFactory.getLogger(SharePointMediaConnector.class);
 
@@ -310,24 +297,15 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
     @SuppressWarnings("unused")
     public void getFileDetails(String subSite, String listId, String path) {
         try {
-//            File file = service.getFile(path);
             //Find the list item that correlates with the path
             List<IQueryOption> queryOptions = new ArrayList<>();
 
             IFilterRestriction filterRestriction = new IsEqualTo("FieldRef/FileRef", path);
-//            IFilterRestriction filterRestriction = new IsEqualTo("title",path);
             queryOptions.add(new Filter(filterRestriction));
             List<ListItem> listItems = execAsyncTask(() -> service.getListItems(subSite, listId, queryOptions));
             for (ListItem listItem : listItems) {
                 logger.debug("Got list Item: {}", listItem);
             }
-            //Now get the fields for the file/folder
-            //Find the field value for RoleAssignments
-//            File file = service.getFile(path);
-//            List<Field> listFields = service.getListFields(file.getUniqueId());
-//            for (Field listField : listFields) {
-//                logger.debug(listField.toString());
-//            }
         } catch (Exception e) {
             logger.error("Failed to fetch file content for {}", path, e);
             throw new RuntimeException("Failed to fetch file content for " + path, e);
@@ -580,19 +558,9 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
                 streamListData.getParams());
     }
 
-    //------------------------
-
+    
     @SuppressWarnings("unused")
     public List<ServerResourceDto> listFolders(String subSite, final String path) {
-//        if (path != null && path.startsWith(LIBRARY_PREFIX)) {
-//            parentFolder = path.replaceFirst(LIBRARY_PREFIX + ".+/?", ""); //Remove the library prefix and the library name
-//            if (parentFolder.isEmpty()) {
-//                parentFolder = basePath + "/";
-//            }
-//        }
-//        String parentFolder = calculateParentFolder(path);
-//        String parentFolder = path != null ? path : basePath + "/";
-
         logger.debug("List folders under sharePoint parent: {}", path);
         try {
             List<Folder> folders = execAsyncTask(() -> service.getFolders(subSite, path));
@@ -648,7 +616,6 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
         claFilePropertiesDto.setFileName(path);
         claFilePropertiesDto.setFolder(true);
         int baseUriLength = calculateBaseUriLength(true);
-//        String baseUri = createBaseUri();
         String nameSuffix = path.substring(baseUriLength + 1);
         try {
             if (nameSuffix.isEmpty()) {
@@ -759,23 +726,6 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
         return hasUniqueRoleAssignments.contains(">true</d:HasUniqueRoleAssignments>");
     }
 
-    /*public void getFilePermissions(String fileName) throws ServiceException {
-        //.../GetFileByServerRelativeUrl('')?$expand=ListItemAllFields/RoleAssignments/Member,ListItemAllFields/RoleAssignments/RoleDefinitionBindings,ListItemAllFields/RoleAssignments/Member/Users
-        String s1 = Util.encodeEscapeCharacters(fileName);
-        String url = "_api/web/GetFileByServerRelativeUrl('" + s1 + "')?$expand=ListItemAllFields/RoleAssignments";
-        InputStream inputStream = service.getInputStream(url);
-        try {
-            String s = IOUtils.toString(inputStream, Charset.defaultCharset());
-            logger.debug("Got result: {}", s);
-//            DocumentBuilder documentBuilder = xmlDocumentBuilder.newDocumentBuilder();
-//            Document document = documentBuilder.parse(inputStream);
-
-        } catch (Exception e) {
-            throw new ServiceException("Failed to parse XML", e, url);
-        }
-
-    }*/
-
     public String getLastChange(String subSite, String listId) throws Exception {
         ChangeQuery query = createItemChangeQuery();
 
@@ -810,8 +760,6 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
 
     private ChangeQuery createItemChangeQuery() {
         ChangeQuery query = new ChangeQuery();
-//        query.setFile(true);
-//        query.setFolder(true);
         query.setItem(true);
         query.setDelete(true);
         query.setMove(true);
@@ -858,7 +806,6 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
     @SuppressWarnings("unused")
     public List<Change> getListItemChanges(String subSite, String listId, int count, ChangeToken token) throws Exception {
         ChangeLogItemQuery query = new ChangeLogItemQuery();
-//        query.setRowLimit(count);
         query.setToken(token);
         CamlQueryOptions queryOptions = new CamlQueryOptions();
         queryOptions.setIncludeMandatoryColumns(true);
@@ -910,7 +857,6 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
 
             serverResourceDto.setName(title);
             String siteUrlPart = Optional.ofNullable(subSite)
-//                    .map(val -> val + "/")
                     .orElse(StringUtils.EMPTY);
             if (libraryBasePath.toLowerCase().contains(EXCLUDED_LIB_PREFIX)) {
                 continue;
@@ -968,13 +914,6 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
         return libraryBasePath;
     }
 
-    /**
-     * 25 16:23:52,858 DEBUG [main] SharePointMediaConnector:447 - User ID: 1, Login Name: i:0#.w|docauthority\\administrator
-     * 25 16:23:52,858 DEBUG [main] SharePointMediaConnector:447 - User ID: 4, Login Name: c:0(.s|true
-     * 25 16:23:52,858 DEBUG [main] SharePointMediaConnector:447 - User ID: 1073741823, Login Name: SHAREPOINT\\system
-     * 25 16:23:52,858 DEBUG [main] SharePointMediaConnector:447 - User ID: 11, Login Name: i:0#.w|docauthority\\testsharepoint
-     * 25 16:23:52,859 DEBUG [main] SharePointMediaConnector:447 - User ID: 8, Login Name: i:0#.w|docauthority\\uri.shtand
-     */
     public void listPrincipals() {
         try {
             List<User> users = execAsyncTask(() -> service.getUsers(null));
@@ -1335,22 +1274,6 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
 
     @NotNull
     private SharePointMediaConnector getOrCreateCachedConnectorForRootSite(String siteAddendum) {
-        /*String site = domainEndpoint + SharePointParseUtils.normalizePath(basePath + "/" + siteAddendum).toLowerCase();
-        SharePointMediaConnector conn = basePathToConnectorMap.get(site);
-        logger.trace("getOrCreateCachedConnectorForRootSite: Cached connector found for site={}, siteAddendum={}, conn={}", site, siteAddendum, conn);
-        if (conn == null) {
-            synchronized (basePathToConnectorMap) {
-                conn = basePathToConnectorMap.get(site);
-                if (conn == null) {
-                    logger.trace("getOrCreateCachedConnectorForRootSite: Cached connector on found for site={} (siteAddendum={}). Creating and adding to cache", site, siteAddendum);
-                    conn = StringUtils.EMPTY.equals(siteAddendum) ? this : recreateConnectorWithAdjustedParams(siteAddendum);
-                    basePathToConnectorMap.put(site, conn);
-                }
-            }
-        }
-
-        return conn;*/
-
         return recreateConnectorWithAdjustedParams(siteAddendum);
     }
 
@@ -1488,400 +1411,3 @@ public class SharePointMediaConnector extends MicrosoftConnectorBase {
         return browseSiteFolders(basePath);
     }
 }
-// ########################################## getLibraryListObject ##################################################
-
-//    private com.middleware.share.List getLibraryListObject(String library) throws FileNotFoundException {
-//        String internalName = SharePointParseUtils.encodeToInternalName(library);
-//        logger.debug("Get library {} (internal: {}) list details", library, internalName);
-//        com.middleware.share.List list;
-//        List<IQueryOption> queryOptions = new ArrayList<>();
-//        IFilterRestriction filterRestriction = new IsEqualTo("entitytypename", internalName);
-//        queryOptions.add(new Filter(filterRestriction));
-//        try {
-//            List<com.middleware.share.List> lists = service.getLists(queryOptions);
-//            if (lists.size() == 0) {
-//                logger.warn("Library {} not found under internal name {}", library, internalName);
-//                throw new FileNotFoundException(library);
-//            }
-//            list = lists.get(0);
-//        } catch (ServiceException e) {
-//            logger.error("Failed to get Lists from SharePoint: " + createBaseUri(true), e);
-//            if (e.getCause() != null && e.getCause() instanceof UnknownHostException) {
-//                throw new FileNotFoundException("Unknown host " + host + " (" + e.getMessage() + ")");
-//            }
-//            throw new RuntimeException("Failed to get lists from sharePoint (" + e.getMessage() + ")", e);
-//        }
-//        return list;
-//    }
-
-// ###########################################################################################
-
-//    @Override
-//    public Stream<MediaFolderWithFiles> streamFoldersAndFiles(String baseFolderId,
-//               List<FolderExcludeRuleDto> nonEqualExcludedRules, List<Path> pathList2Skip,
-//               List<String> dirnameList2Skip, Long runId) {
-//        return innerStreamFoldersAndFiles(baseFolderId, nonEqualExcludedRules, pathList2Skip, dirnameList2Skip, runId);
-//    }
-
-//    private Stream<MediaFolderWithFiles> innerStreamFoldersAndFiles(String path, List<FolderExcludeRuleDto> nonEqualExcludedRules,
-//                                                                    List<Path> pathList2Skip, List<String> dirnameList2Skip,
-//                                                                    Long runId) {
-//        //TO-DO - check if we need to skip the folder
-//        //TO-DO - check scan cap
-//        try {
-//            //Return the folders with files
-//            SharePointMediaFolderWithFiles folderWithFiles = new SharePointMediaFolderWithFiles(path);
-//            List<File> files = listFiles(path);
-//            folderWithFiles.setFiles(files);
-//            Stream<MediaFolderWithFiles> pathStream = listFolders(path).stream()
-//                    .flatMap(f -> innerStreamFoldersAndFiles(f.getFullName(), nonEqualExcludedRules, pathList2Skip, dirnameList2Skip, runId));
-//            return Stream.concat(Stream.of(folderWithFiles), pathStream);
-//
-//        }
-//        catch (ServiceException e) {
-//            logger.warn("Service Exception while listing items in folder {}. {}", path, e);
-//            scanErrorsService.addError("Service Exception Error while listing items in folder", e, null, path, runId);
-//        }
-//        catch (Exception e) {
-//            logger.error("Unexpected error while listing items in folder {}. {}", path, e);
-//            scanErrorsService.addError("System error while listing items in folder", e, null, path, runId);
-//        }
-//        //TO-DO - create folder in ERROR state
-//        return Stream.empty();
-//    }
-
-
-//    private Folder getFolderData(String path) {
-//        try {
-//            Folder folder = service.getFolder(path);
-//            logger.debug("Folder path {} has name {}", path, folder.getName());
-//            return folder;
-//
-//        } catch (ServiceException e) {
-//            logger.error("Failed to get folder {} data", path, e);
-//            throw new RuntimeException("Failed to get folder {} data", e);
-//        }
-//    }
-
-//    public RawDocumentMessageDto getFileData(String path) {
-//        try {
-//            File file = service.getFile(path);
-//            List<Field> listFields = service.getListFields(file.getUniqueId());
-//            for (Field listField : listFields) {
-//                logger.debug(listField.toString());
-//            }
-//
-//            byte[] fileContent = service.getFileContent(path);
-//            RawDocumentMessageDto rawDocumentMessageDto = new RawDocumentMessageDto(path, fileContent, null, null, null);
-//            return rawDocumentMessageDto;
-//        } catch (ServiceException e) {
-//            logger.error("Failed to fetch file content for {}", path, e);
-//            throw new RuntimeException("Failed to fetch file content for " + path, e);
-//        }
-//    }
-
-//    public List<ClaFilePropertiesDto> listItems(String listId, int count, String lastMediaItemId) {
-//        //http://ec2-54-200-41-63.us-west-2.compute.amazonaws.com/sites/test/_api/web/lists('f1f04276-593b-454b-8ee1-006f83af18d3')/Items?$top=5&$expand=FieldValuesAsText
-//        try {
-//            if (lastMediaItemId != null) {
-//                lastMediaItemId = StringUtils.split(lastMediaItemId, "/")[1];
-//                logger.debug("List {} items from {}", count, lastMediaItemId);
-//            } else {
-//                logger.debug("List {} items from the beginning", count);
-//            }
-//            List<IQueryOption> queryOptions = new ArrayList<>();
-//            queryOptions.add(new SharepointPagingToken(lastMediaItemId, count));
-//            queryOptions.add(new Expand("File/Author,FieldValuesAsText"));
-//            queryOptions.add(new Select("*", "HasUniqueRoleAssignments"));
-//            SharePointListItemPage listItems = getListItems(listId, queryOptions);
-//            logger.debug("Next page: {}",listItems.getNextUrl());
-//            return convertSharePointListItemsToFiles(listId, listItems.getItems());
-////            List<ListItem> listItems = service.getListItems(listId, queryOptions);
-////            return convertListItemsToFiles(listId, listItems);
-//        } catch (ServiceException e) {
-//            logger.error("Failed to list items from list {}", listId, e);
-//            throw new RuntimeException("Failed to list items from list " + listId, e);
-//        }
-//    }
-
-//    private com.middleware.share.List getLibraryListObjectByPath(String path) throws FileNotFoundException {
-//        com.middleware.share.List list;
-//        List<IQueryOption> queryOptions = new ArrayList<>();
-//        IFilterRestriction filterRestriction = new StartsWith("DocumentTemplateUrl", path);
-//        queryOptions.add(new Filter(filterRestriction));
-//        try {
-//            List<com.middleware.share.List> lists = service.getLists(queryOptions);
-//            if (lists.size() == 0) {
-//                logger.warn("Library not found under path {}", path);
-//                throw new FileNotFoundException(path);
-//            }
-//            list = lists.get(0);
-//        } catch (ServiceException e) {
-//            logger.error("Failed to get Lists from SharePoint: " + createBaseUri(), e);
-//            if (e.getCause() != null && e.getCause() instanceof UnknownHostException) {
-//                throw new FileNotFoundException("Unknown host " + host + " (" + e.getMessage() + ")");
-//            }
-//            throw new RuntimeException("Failed to get lists from sharePoint (" + e.getMessage() + ")", e);
-//        }
-//        return list;
-//    }
-
-//    private static AuthenticationResult getAccessTokenFromUserCredentials(String resource,
-//                                                                          String username, String password) {
-//        AuthenticationContext context;
-//        AuthenticationResult result = null;
-//        ExecutorService service = null;
-//        try {
-//            service = Executors.newFixedThreadPool(1);
-//            context = new AuthenticationContext(AUTHORITY_URL, false, service);
-//            Future<AuthenticationResult> future = context.acquireToken(
-//                    resource, CLIENT_ID, username, password,
-//                    null);
-//            result = future.get();
-//        } catch (Exception e) {
-//            logger.error("Failed to connect to sharePoint at {}", resource, e);
-//            throw new RuntimeException("Failed to connect to sharePoint at " + resource, e);
-//        } finally {
-//            service.shutdown();
-//        }
-//
-//        if (result == null) {
-//            throw new RuntimeException(
-//                    "authentication result was null");
-//        }
-//        return result;
-//    }
-
-//    private int sharePointType = 3;
-//    private List<String> cookieStore;
-//    private ContextInfo contextInfo;
-//
-//    private InputStream getInputStream(String method, String requestUrl, String body, String xHttpMethod, String ifMatchHeader,  boolean realAllInputStream) throws Exception {
-//        System.setProperty("http.auth.preference", "basic");
-//        System.setProperty("sun.security.ssl.allowUnsafeRenegotiation", "true");
-//        String fullUrl;
-//        String baseUrl;
-//        String bodyText;
-//        if (this.sharePointType == 3) {
-//            URL urlObject;
-//            if (this.userName != null && this.userName.endsWith(".onmicrosoft.com")) {
-//                this.sharePointType = 1;
-//            } else if (this.url != null && this.url.length() > 0) {
-//                if ((urlObject = new URL(this.url)).getHost() == null || !urlObject.getHost().toLowerCase().endsWith(".sharepoint.com") && !urlObject.getHost().toLowerCase().endsWith(".sharepointonline.com") && !urlObject.getHost().toLowerCase().endsWith(".office365.com")) {
-//                    this.sharePointType = 2;
-//                } else {
-//                    this.sharePointType = 1;
-//                }
-//            } else {
-//                this.sharePointType = 2;
-//            }
-//
-//            if (this.sharePointType == 1) {
-//                urlObject = new URL(this.url);
-//                baseUrl = urlObject.getProtocol() + "://" + urlObject.getHost();
-//                bodyText = "<S:Envelope xmlns:S=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:wsa=\"http://www.w3.org/2005/08/addressing\" xmlns:wsp=\"http://schemas.xmlsoap.org/ws/2004/09/policy\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" xmlns:wst=\"http://schemas.xmlsoap.org/ws/2005/02/trust\" xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\"><S:Header><wsa:Action S:mustUnderstand=\"1\">http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue</wsa:Action><wsa:To S:mustUnderstand=\"1\">https://login.microsoftonline.com/rst2.srf</wsa:To><wsse:Security><wsse:UsernameToken wsu:Id=\"user\"><wsse:Username>" + this.userName + "</wsse:Username><wsse:Password>" + this.password + "</wsse:Password></wsse:UsernameToken>" + "</wsse:Security></S:Header>" + "<S:Body><wst:RequestSecurityToken Id=\"RST0\">" + "<wst:RequestType>http://schemas.xmlsoap.org/ws/2005/02/trust/Issue</wst:RequestType><wsp:AppliesTo>" + "<wsa:EndpointReference><wsa:Address>" + baseUrl + "</wsa:Address></wsa:EndpointReference>" + "</wsp:AppliesTo><wsp:PolicyReference URI=\"MBI\" />" + "</wst:RequestSecurityToken></S:Body>" + "</S:Envelope>";
-////                if ((fullUrl = extractConnectionElement(this.getInputStream("https://login.microsoftonline.com/rst2.srf", bodyText))) != null) {
-////                    baseUrl = baseUrl.endsWith("/") ? baseUrl + "_forms/default.aspx?wa=wsignin1.0" : baseUrl + "/_forms/default.aspx?wa=wsignin1.0";
-////                    this.getInputStream(baseUrl, fullUrl);
-////                }
-//            }
-//        }
-//
-//        fullUrl = this.url.endsWith("/") ? this.url + requestUrl : this.url + "/" + requestUrl;
-//        CloseableHttpResponse httpResponse = null;
-//        boolean retry = true;
-//
-//        while (true) {
-//            HttpRequestBase httpRequest;
-//            while (retry) {
-//                URI requestUri;
-//                URI uri = requestUri = new URI(fullUrl);
-//                if (method.equals("GET")) {
-//                    httpRequest = new HttpGet(uri);
-//                } else if (method.equals("DELETE")) {
-//                    httpRequest = new HttpDelete(uri);
-//                } else if (method.equals("PUT")) {
-//                    httpRequest = new HttpPut(uri);
-//                } else {
-//                    httpRequest = new HttpPost(uri);
-//                    if (body != null) {
-//                        StringEntity bodyEntity;
-//                        (bodyEntity = new StringEntity(body, "UTF-8")).setContentType("application/json;odata=verbose");
-//                        ((HttpPost) httpRequest).setEntity(bodyEntity);
-//                    }
-//                }
-//
-////                httpRequest.setHeader("User-Agent", b.a);
-//                httpRequest.setHeader("Accept", "application/atom+xml");
-//                httpRequest.setHeader("Content-Type", "application/json;odata=verbose");
-//                httpRequest.setHeader("Accept-Encoding", "gzip");
-//
-////                if (this.t != null) {
-////                    ((HttpRequestBase) httpRequest).setHeaders(this.t);
-////                }
-//
-//                if (xHttpMethod != null && xHttpMethod.length() > 0) {
-//                    httpRequest.setHeader("X-HTTP-Method", xHttpMethod);
-//                }
-//
-//                if (ifMatchHeader != null && ifMatchHeader.length() > 0) {
-//                    httpRequest.setHeader("IF-MATCH", ifMatchHeader);
-//                }
-//
-//                HttpClientBuilder httpClientBuilder = HttpClients.custom();
-//                BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
-//                if (this.sharePointType == 2) {
-//                    basicCredentialsProvider.setCredentials(new AuthScope(requestUri.getHost(), requestUri.getPort(), AuthScope.ANY_REALM), new UsernamePasswordCredentials(this.userName, this.password));
-//                    basicCredentialsProvider.setCredentials(new AuthScope(requestUri.getHost(), requestUri.getPort(), AuthScope.ANY_REALM), new NTCredentials(this.userName, this.password, requestUri.getHost(), this.domain != null ? this.domain : ""));
-////                } else if (this.f != null) {
-////                    httpClientBuilder.setDefaultCookieStore(this.f);
-//                }
-//
-////                if (this.p != null && this.o != null) {
-////                    basicCredentialsProvider.setCredentials(new AuthScope(this.p.getHostName(), this.p.getPort(), AuthScope.ANY_REALM), this.o);
-////                }
-//
-//                Calendar calendar;
-//                (calendar = Calendar.getInstance()).add(13, -60);
-////                if ((this.contextInfo == null || this.contextInfo.getFormDigestValueExpireTime().compareTo(calendar.getTime()) < 0)) {
-////                    this.contextInfo = this.getContextInfo();
-////                }
-//
-//                if (this.contextInfo != null) {
-//                    httpRequest.setHeader("X-RequestDigest", this.contextInfo.getFormDigestValue());
-//                }
-//
-////                if (this.r != null) {
-////                    httpClientBuilder.setDefaultRequestConfig(this.r);
-////                }
-//
-////                if (this.q != null) {
-////                    httpClientBuilder.setConnectionManager(this.q);
-////                }
-//
-//                Registry objectRegistry = RegistryBuilder.create().register("NTLM", new NTLMSchemeFactory()).register("Basic", new BasicSchemeFactory()).register("Digest", new DigestSchemeFactory()).register("negotiate", new SPNegoSchemeFactory()).register("Kerberos", new KerberosSchemeFactory()).build();
-//                httpClientBuilder.setDefaultAuthSchemeRegistry(objectRegistry);
-//                this.httpclient = httpClientBuilder.setDefaultCredentialsProvider(basicCredentialsProvider).build();
-//                StatusLine statusLine;
-//                Header[] locationHeaders;
-//                if ((statusLine = (httpResponse = this.httpclient.execute((HttpUriRequest) httpRequest)).getStatusLine()).getStatusCode() >= 300 && statusLine.getStatusCode() < 400) {
-//                    if ((locationHeaders = httpResponse.getHeaders("Location")).length > 0) {
-//                        fullUrl = locationHeaders[0].getValue();
-//                        continue;
-//                    }
-//                } else if (statusLine.getStatusCode() == 500) {
-//                    if ((locationHeaders = httpResponse.getHeaders("Content-Type")) != null && locationHeaders.length > 0 && locationHeaders[0].getValue() != null) {
-//                        InputStream errorBody = httpResponse.getEntity().getContent();
-//                        Header[] var27;
-//                        if ((var27 = httpResponse.getHeaders("Content-Encoding")) != null && var27.length > 0 && (xHttpMethod = var27[0].getValue()) != null && xHttpMethod.equals("gzip")) {
-//                            errorBody = new GZIPInputStream(new BufferedInputStream((InputStream) errorBody));
-//                        }
-//
-//                        throw new RuntimeException("Service exception"+requestUrl+" "+body);
-//                    }
-//                } else if (statusLine.getStatusCode() >= 400) {
-//                    throw new ServiceException(Integer.toString(statusLine.getStatusCode()) + " " + statusLine.getReasonPhrase(), (Throwable) null, requestUrl, body);
-//                }
-//
-//                retry = false;
-//            }
-//
-//            HttpEntity httpEntity;
-//            if ((httpEntity = httpResponse.getEntity()) != null) {
-//                InputStream result = httpEntity.getContent();
-//                Header[] headers;
-//                if ((headers = httpResponse.getHeaders("Content-Encoding")) != null && headers.length > 0 && (bodyText = headers[0].getValue()) != null && bodyText.equals("gzip")) {
-//                    result = new GZIPInputStream(new BufferedInputStream((InputStream) result));
-//                }
-//
-//                if (realAllInputStream) {
-//                    result = readAllInputStream(result);
-//                }
-//
-//                return (InputStream) result;
-//            }
-//
-//            return null;
-//        }
-//    }
-//
-//    private static String extractConnectionElement(InputStream inputStream) throws Exception {
-//        String var1 = null;
-//        XMLStreamReader var3 = XMLInputFactory.newInstance().createXMLStreamReader(inputStream);
-//
-//        while (var3.hasNext() && var3.next() > 0) {
-//            if (var3.isStartElement() && var3.getLocalName() != null && var3.getNamespaceURI() != null && var3.getLocalName().equals("BinarySecurityToken") && var3.getNamespaceURI().equals("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd")) {
-//                var1 = var3.getElementText();
-//            }
-//        }
-//
-//        return var1;
-//    }
-//
-////    private ContextInfo getContextInfo() throws ServiceException {
-////        InputStream inputStream = null;
-////        String var2 = "_api/contextinfo";
-////
-////        try {
-////            inputStream = this.getInputStream("POST", var2, (String)null, (String)null, (String)null, (InputStream)null, true, true);
-////            this.contextInfo = new ContextInfo(inputStream);
-////        } catch (ServiceException var13) {
-////            throw var13;
-////        } catch (Exception var14) {
-////            throw new ServiceException(var14.getMessage(), var14, var2);
-////        } finally {
-////            if(inputStream != null) {
-////                try {
-////                    inputStream.close();
-////                } catch (IOException var12) {
-////                    throw new ServiceException(var12.getMessage(), var12, var2);
-////                }
-////            }
-////
-////            if(this.httpclient != null) {
-////                try {
-////                    this.httpclient.close();
-////                } catch (IOException var11) {
-////                    throw new ServiceException(var11.getMessage(), var11, var2);
-////                }
-////            }
-////
-////        }
-////
-////        return this.contextInfo;
-////    }
-//
-//    private static InputStream readAllInputStream(InputStream var0) throws IOException {
-//        BufferedInputStream bufferedInputStream = new BufferedInputStream(var0);
-//        ByteArrayOutputStream var1 = new ByteArrayOutputStream();
-//        byte[] var2 = new byte[2048];
-//
-//        int var3;
-//        try {
-//            var3 = bufferedInputStream.read(var2);
-//
-//            while(true) {
-//                if(var3 == -1) {
-//                    var2 = var1.toByteArray();
-//                    break;
-//                }
-//
-//                var1.write(var2, 0, var3);
-//                var3 = bufferedInputStream.read(var2);
-//            }
-//        } finally {
-//            bufferedInputStream.close();
-//            var1.close();
-//        }
-//
-//        for(var3 = 0; var3 < var2.length; ++var3) {
-//            if(var2[var3] == 25) {
-//                var2[var3] = 32;
-//            } else if(var2[var3] == 38 && var3 < var2.length - 3 && var2[var3 + 1] == 35 && var2[var3 + 2] == 120 && var2[var3 + 3] != 9 && var2[var3 + 3] != 65 && var2[var3 + 3] != 68) {
-//                var2[var3] = 32;
-//            }
-//        }
-//
-//        return new ByteArrayInputStream(var2);
-//    }
-

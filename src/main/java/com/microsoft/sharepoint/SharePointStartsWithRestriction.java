@@ -3,9 +3,6 @@ package com.microsoft.sharepoint;
 import com.middleware.share.Util;
 import com.middleware.share.queryoptions.IFilterRestriction;
 
-/**
- * Created by uri on 05/10/2016.
- */
 public class SharePointStartsWithRestriction implements IFilterRestriction {
 
     private String propertyName;

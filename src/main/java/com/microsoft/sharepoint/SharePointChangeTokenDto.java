@@ -5,9 +5,6 @@ import com.middleware.share.ChangeTokenScope;
 
 import java.io.Serializable;
 
-/**
- * Created by uri on 30/10/2016.
- */
 public class SharePointChangeTokenDto implements Serializable {
 
 

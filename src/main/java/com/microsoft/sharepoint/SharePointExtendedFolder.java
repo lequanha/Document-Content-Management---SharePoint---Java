@@ -2,9 +2,6 @@ package com.microsoft.sharepoint;
 
 import java.util.Objects;
 
-/**
- * Created by uri on 10/11/2016.
- */
 public class SharePointExtendedFolder {
 
     private String listId;
